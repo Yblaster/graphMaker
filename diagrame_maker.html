@@ -1,0 +1,874 @@
+<html>
+<head> 
+	<title> toolbar projet </title>
+	
+	<!-- fichier css pour le bouton télécharger -->
+	<link href="style/style.css" rel="stylesheet" type="text/css">
+	<!-- chemin de base des sources -->
+	<script type="text/javascript">
+		mxBasePath = 'mxgraph-master/mxgraph-master/javascript/src';
+	</script>
+	
+	
+	<!-- chemin vers la bibliotheque -->
+	<script type="text/javascript" src='mxgraph-master/mxgraph-master/javascript/src/js/mxClient.js'></script>
+	
+	<!-- chemin ver JQuery -->
+	<script src="jquery.js"></script>
+
+
+	<script type="text/javascript">
+	
+	//permet d'afficher l'id des vertex
+	<!-- (function() -->
+		<!-- { -->
+			<!-- var mxRectangleShapeIsHtmlAllowed = mxRectangleShape.prototype.isHtmlAllowed; -->
+			<!-- mxRectangleShape.prototype.isHtmlAllowed = function() -->
+			<!-- { -->
+				<!-- return mxRectangleShapeIsHtmlAllowed.apply(this, arguments) && this.state == null; -->
+			<!-- }; -->
+			
+			<!-- mxRectangleShapePaintForeground = mxRectangleShape.prototype.paintForeground; -->
+			<!-- mxRectangleShape.prototype.paintForeground = function(c, x, y, w, h) -->
+			<!-- { -->
+				<!-- if (this.state != null && this.state.cell.geometry != null && !this.state.cell.geometry.relative) -->
+				<!-- { -->
+					<!-- c.setFontColor('#a0a0a0'); -->
+					<!-- c.text(x + 2, y, 0, 0, this.state.cell.id, 'left', 'top'); -->
+				<!-- } -->
+				
+				<!-- mxRectangleShapePaintForeground.apply(this, arguments); -->
+			<!-- }; -->
+		<!-- })(); -->
+		
+		
+		//permet de forcer le style des edges pour qu'il 
+		mxGraph.prototype.getAllConnectionConstraints = function(terminal, source)
+		{
+			if (terminal != null && terminal.shape != null)
+			{
+				if (terminal.shape.stencil != null)
+				{
+					if (terminal.shape.stencil.constraints != null)
+					{
+						return terminal.shape.stencil.constraints;
+					}
+				}
+				else if (terminal.shape.constraints != null)
+				{
+					return terminal.shape.constraints;
+				}
+			}
+	
+			return null;
+		};
+	
+		// mets en place les encrages autour des vertex pour placer les edges
+		mxShape.prototype.constraints = [new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+										 new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+										 new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+		        	              		 new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+		        	              		 new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+		        	              		 new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(0.75, 1), true)];
+		
+		// Edges have no connection points
+		mxPolyline.prototype.constraints = null;
+	
+
+		
+		function main()
+		{
+			//tableau permetant d'isoler les vertex dates et les vertex principaux
+			//date 
+			var tableauEnfantDate = [];
+			// principal, un vertex est crée de base c'est le vertex parent par défaut 
+			var tableauParent = [1] ;
+			var idCourante = 1;
+			
+			//fais le tri dans le tableau parent pour n'avoir qu'une seul instance de chaque id 
+			function getUniqueVal(value, index, self)
+			{ 
+				return self.indexOf(value) === index;
+			}
+			 
+			 
+			 //permet de retirer les id des enfants de celui des parents 
+			function retireEnfantParent()
+			{
+			
+				tableauParent = tableauParent.filter(getUniqueVal)
+				
+				for (let i = 0 ; i < tableauEnfantDate.length ; i++)
+				{
+					
+					var indiceToRemove = tableauParent.indexOf(tableauEnfantDate[i]);
+					
+					if (indiceToRemove != -1)
+					{
+						tableauParent.splice(indiceToRemove, 1);
+					}
+
+				}
+			}
+			 //verifie que l'id passer est un id d'enfant ou non, 
+			 function estUneDate(idEnfant)
+			 {
+				if(tableauEnfantDate.indexOf(idEnfant) == -1)
+				{
+					return false;
+					
+				}
+				else
+				{
+					return true;
+					
+				}
+			 }
+			 
+			 function estUnParent(idParent)
+			 {
+
+				if(tableauParent.indexOf(idParent) == -1)
+				{
+					return false;
+					
+				}
+				else
+				{
+					return true;
+					
+				}
+			 }
+			
+
+			
+			// verifie si le navigateur est supporter
+			if (!mxClient.isBrowserSupported())
+			{
+				// message d'erreur si ce n'est pas le cas 
+				mxUtils.error('Browser is not supported!', 200, false);
+			}
+			else
+			{
+				
+				
+				// on construit la partie toolbar 
+				var tbContainer = document.createElement('div');
+				tbContainer.style.position = 'absolute';
+				tbContainer.style.overflow = 'hidden';
+				tbContainer.style.padding = '2px';
+				tbContainer.style.left = '0px';
+				tbContainer.style.top = '26px';
+				tbContainer.style.width = '24px';
+				tbContainer.style.bottom = '0px';
+				
+				document.body.appendChild(tbContainer);
+			
+				// on construit la toolbar
+				var toolbar = new mxToolbar(tbContainer);
+				toolbar.enabled = false
+				
+				// on construit la partie graph
+				container = document.createElement('div');
+				container.style.position = 'absolute';
+				container.style.overflow = 'hidden';
+				container.style.left = '24px';
+				container.style.top = '26px';
+				container.style.right = '0px';
+				container.style.bottom = '0px';
+				container.style.background = 'url("mxgraph-master/mxgraph-master/javascript/examples/editors/images/grid.gif")';
+
+				document.body.appendChild(container);
+				
+				
+				
+				// Workaround for Internet Explorer ignoring certain styles
+				if (mxClient.IS_QUIRKS)
+				{
+					document.body.style.overflow = 'hidden';
+					new mxDivResizer(tbContainer);
+					new mxDivResizer(container);
+				}
+				
+	
+				// crée le model et le graph 
+				var model = new mxGraphModel();
+				var graph = new mxGraph(container, model);
+				
+				graph.dropEnabled = true;
+				graph.htlmLabels = true;
+				graph.vertexLabelsMovable = true;
+				graph.graphHandler.removeCellsFromParent = false;
+				graph.autoSizeCellsOnAdd = true;
+		
+				
+				var edgeStyle = graph.stylesheet.getDefaultEdgeStyle();
+				edgeStyle[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector;
+				
+
+
+			
+				
+
+				
+
+				//////////////////////////////////////////////////control pour ajout de label///////////////////////////////////////////////////////
+				
+				// charge l'image pour l'ajout de date 
+				var addLabelImage = new mxImage('mxgraph-master/mxgraph-master/javascript/examples/images/add.png', 16, 16);
+				// crée un controlleur qui permet d'ajouter une image et de lancer une action si on clique dessus
+				mxCellRendererCreateControlAdd = mxCellRenderer.prototype.createControl;
+				
+				mxCellRenderer.prototype.createControl = function(state)
+				{	
+				
+					
+					mxCellRendererCreateControlAdd.apply(this, arguments);
+					//variable qui contient le graph 
+					var graph = state.view.graph;	
+					
+							//verifie que la case selectionner est un vertex
+							if (graph.getModel().isVertex(state.cell))
+							{
+								
+								if (state.addControl == null)
+								{
+									//on recupere la cellule id selectionner et on l'ajoute au tableau parent 
+									tableauParent.push(state.cell.id);
+									
+									//crée un rectangle contenant l'image du bouton + et lui rajoute un Control
+									var a = new mxRectangle(0, 0, addLabelImage.width, addLabelImage.height );
+									state.addControl = new mxImageShape(a, addLabelImage.src);
+									state.addControl.dialect = graph.dialect;
+									state.addControl.preserveImageAspect = false;
+									
+									
+									//permet de voir si une date est déja en place pour le vertex ciblé
+									var dateLimite = true;
+									// quand le bouton est cliquer 
+									this.initControl(state, state.addControl, false, function(evt)
+									{	
+										if (dateLimite == true)
+										{	
+
+											dateLimite = false ;
+											//ajoute un vertex enfant au vertex selectionner 
+											label = graph.insertVertex(state.cell, null, 'date format YYYY/MM/DD', 1, 1, 0, 0);
+									
+											//pour avoir l'id du fils 
+											var text =  model.getChildCells(model.getCell(state.cell.id), false, false); // on précise l'id du parent ça nous donne un tableau avec les fils
+											var tableauText = Object.values(text[0]) // on récupere les donnée du fils dans un tableau 
+														
+											//on ajoute l'enfant crée au tableau d'enfant 
+											tableauEnfantDate.push(tableauText[3]); // on rajoute l'id du fils au tableau enfant date 
+											
+											// comme la fonction initControl est appeller plusieur fois pas la bibliotheque
+											// et que l'enfant est condidéré comme un vertex, il est ajoute au tableau parent il faut donc le retirer 
+											retireEnfantParent();
+											
+											
+											graph.view.refresh(label);
+
+											
+																						
+										}
+										else
+										{
+											mxUtils.alert('date déja définie');
+										}
+													
+									});
+									
+								}	
+							}
+
+				};
+			
+				//fonction qui aide a placer le bouton Control
+				var getAddControlBounds = function(state)
+				{
+
+						if (state.addControl != null)
+						{
+
+							var oldScale = state.addControl.scale;
+							var w = state.addControl.bounds.width / oldScale;
+							var h = state.addControl.bounds.height / oldScale;
+							var s = state.view.scale;			
+
+							return (state.view.graph.getModel().isEdge(state.cell)) ? new mxRectangle(state.x + state.width / 2 - w / 2 * s,state.y + state.height / 2 - h / 2 * s, w * s, h * s)
+								: new mxRectangle(state.x + state.width - (w) * s , state.y + state.height - (w) * s, w * s, h * s);
+						}
+					
+						return null;
+				
+					
+				};
+				
+				mxCellRendererRedrawControl = mxCellRenderer.prototype.redrawControl;
+				mxCellRenderer.prototype.redrawControl = function(state)
+				{
+
+					
+
+
+						mxCellRendererRedrawControl.apply(this, arguments);
+					
+						if (state.addControl != null)
+						{								 
+
+							var bounds = getAddControlBounds(state);
+							var s = state.view.scale;	
+								
+							if (state.addControl.scale != s || !state.addControl.bounds.equals(bounds))
+							{
+								state.addControl.bounds = bounds ;
+								state.addControl.scale = s;
+								state.addControl.redraw();
+							}
+
+
+						}
+
+				};
+				
+				
+				//////////////////////////////////////////////////control pour ajout de label///////////////////////////////////////////////////////
+				
+				
+				///////////////////////////////////////////////////////control suppression de vertex///////////////////////////////////////////////
+				
+				//on charge l'image du bouton - pour supprimer le vertex
+				var deleteImage = new mxImage('mxgraph-master/mxgraph-master/javascript/examples/editors/images/overlays/forbidden.png', 16, 16);
+				
+				mxCellRendererCreateControl = mxCellRenderer.prototype.createControl;
+				mxCellRenderer.prototype.createControl = function(state)
+				{
+					mxCellRendererCreateControl.apply(this, arguments);
+					
+					var graph = state.view.graph;
+					
+					if (graph.getModel().isVertex(state.cell) )
+					{
+						if (state.deleteControl == null)
+						{
+							var b = new mxRectangle(0, 0, deleteImage.width , deleteImage.height);
+							state.deleteControl = new mxImageShape(b, deleteImage.src);
+							state.deleteControl.dialect = graph.dialect; 
+							state.deleteControl.preserveImageAspect = false;
+							
+							
+							
+							this.initControl(state, state.deleteControl, false, function (evt)
+							{
+								if (graph.isEnabled())
+								{
+									// si le parent a un fils 
+									if(tableauEnfantDate["length"] > 0)
+									{
+										
+										var text =  model.getChildCells(model.getCell(state.cell.id), false, false); // on précise l'id du parent ça nous donne un tableau avec les fils
+										if(text[0] !== undefined)
+										{
+											
+											var tableauText = Object.values(text[0]) // on récupere les donnée du fils dans un tableau 
+											
+											//on recupere le fils de la cellule afin de pouvoir le supprimer avec le parent
+											
+											var indexOfChildToRemove = tableauEnfantDate.indexOf(tableauText[3]);
+											tableauEnfantDate.splice(indexOfChildToRemove, 1);
+											
+											var indexOfParenToRemove = tableauParent.indexOf(state.cell.id);
+											tableauParent.splice(indexOfParenToRemove, 1);
+											
+											
+											graph.removeCells([state.cell]);
+											mxEvent.consume(evt);
+											console.log('cell remove');
+										}
+										else{
+											// si il n'as pas de fils 
+											var indexOfParenToRemove = tableauParent.indexOf(state.cell.id);
+											tableauParent.splice(indexOfParenToRemove, 1);
+											graph.removeCells([state.cell]);
+											mxEvent.consume(evt);
+											console.log('cell remove');
+										
+										}
+									}
+									else
+									{
+										var indexOfParenToRemove = tableauParent.indexOf(state.cell.id);
+										tableauParent.splice(indexOfParenToRemove, 1);
+										graph.removeCells([state.cell]);
+										mxEvent.consume(evt);
+										console.log('cell remove');
+									}
+									
+								}
+							});
+							
+							
+						}
+						
+						
+						
+					}
+					else if (state.deleteControl != null)
+					{
+						state.deleteControl.destroy();
+						state.deleteControl = null;
+					}
+				};
+				
+				var getDeleteControlBounds = function(state)
+				{
+					if (state.deleteControl != null)
+					{
+						var oldScale = state.deleteControl.scale;
+						var w = state.deleteControl.bounds.width / oldScale;
+						var h = state.deleteControl.bounds.height / oldScale;
+						var s = state.view.scale;			
+
+						return (state.view.graph.getModel().isEdge(state.cell)) ? 
+							new mxRectangle(state.x + state.width / 2 - w / 2 * s,
+								state.y + state.height / 2 - h / 2 * s, w * s, h * s)
+							: new mxRectangle(state.x + state.width - w * s,
+								state.y, w * s, h * s);
+					}
+					
+					return null;
+				};
+				
+				mxCellRendererRedrawControl2 = mxCellRenderer.prototype.redrawControl;
+				mxCellRenderer.prototype.redrawControl = function(state)
+				{
+				
+					if(estUnParent(state.cell.id))
+					{
+						mxCellRendererRedrawControl2.apply(this, arguments);
+						
+						if (state.deleteControl != null)
+						{
+							var bounds = getDeleteControlBounds(state);
+							var s = state.view.scale;
+							
+							if (state.deleteControl.scale != s || !state.deleteControl.bounds.equals(bounds))
+							{
+								state.deleteControl.bounds = bounds ;
+								state.deleteControl.scale = s;
+								
+								
+								state.deleteControl.redraw();
+								
+							}
+
+						}
+					}
+					else 
+					{	
+						if (state.addControl != null)
+						{
+							state.deleteControl.destroy();
+							state.addControl.destroy();
+						}
+					}
+						
+				};
+				
+				// Overridden to remove the control if the state is destroyed
+				mxCellRendererDestroy = mxCellRenderer.prototype.destroy;
+				mxCellRenderer.prototype.destroy = function(state)
+				{
+				
+
+						mxCellRendererDestroy.apply(this, arguments);
+
+
+
+					
+						if (state.deleteControl != null)
+						{
+							state.deleteControl.destroy();
+							state.deleteControl = null;
+							state.addControl.destroy();
+							state.addControl = null;
+						}
+					
+				};
+				
+				///////////////////////////////////////////////////////control suppression de vertex///////////////////////////////////////////////
+
+				
+				//savoir si la zone ou on lache l'image est bonne pour l'ajouter au graph 
+				mxDragSource.prototype.getDropTarget = function(graph, x, y)
+				{
+				
+
+					var cell = graph.getCellAt(x, y);
+					
+					if (!graph.isValidDropTarget(cell))
+					{
+						cell = null;
+					}
+					
+					return cell;
+				};
+
+				// autorise les nouvelles connection dans le graph 
+				graph.setConnectable(true);
+				graph.setMultigraph(false);
+
+				// Stops editing on enter or escape keypress
+				var keyHandler = new mxKeyHandler(graph);
+				var rubberband = new mxRubberband(graph);
+				
+				//ajout des vertex qui permettent d'ajouter une figure au graph
+				var addVertex = function(icon, w, h, style)
+				{
+					var vertex = new mxCell(null, new mxGeometry(0, 0, w, h), style);
+					vertex.setVertex(true);
+
+					addToolbarItem(graph, toolbar, vertex, icon);
+				};
+				
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/swimlane.gif', 120, 160, 'shape=swimlane;startSize=20;');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/rectangle.gif', 100, 40, '');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/ellipse.gif', 40, 40, 'shape=ellipse');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/rhombus.gif', 40, 40, 'shape=rhombus');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/triangle.gif', 40, 40, 'shape=triangle');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/cylinder.gif', 40, 40, 'shape=cylinder');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/actor.gif', 30, 40, 'shape=actor');
+				toolbar.addLine();
+				
+				//////////////////////////fonction valider les formats de date ////////////////////////
+				
+				// verifie que la date a un bon format (YYY/MM/DD)
+				function validDatePatternDateUnique(day) {
+					var pattern = new RegExp(/^\d{4}-\d{2}-\d{2}$/);
+						return pattern.test(day);
+				}
+
+				
+
+				// verifie que la date a un bon format (YYYY/MM/DD - YYY/MM/DD)
+				function validDatePatternMulti(day) {
+					var pattern = new RegExp(/^\d{4}-\d{2}-\d{2} \/ \d{4}-\d{2}-\d{2}$/);
+					console.log("la date  : " + day );
+					return pattern.test(day);
+				}
+				
+				
+				// verifie que la date existe 
+				function validDate(day) {
+				  console.log("test day " + day);
+				  var bitsDays = day.split('-');
+				  var yDays = bitsDays[0], 
+				  mDays  = bitsDays[1],
+				  dDays = bitsDays[2];
+				  var daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
+				  if (yDays % 400 === 0 || (yDays % 100 !== 0 && yDays % 4 === 0)) {
+					daysInMonth[1] = 29;
+				  }
+				  
+				  return dDays <= daysInMonth[--mDays];
+				}
+				
+				
+				//////////////////////////fonction valider les formats de date ////////////////////////
+
+				
+				//////////////////////////bouton qui permet d'exporter et enregistre un fichier ics ////////////////////////
+	
+				
+				var button = mxUtils.button('export', function(evt)
+				{
+				
+					// qu'il y est au moins un vertex sur le graph 
+					if (tableauParent[1] === undefined)
+					{
+						mxUtils.alert("aucun graphe crée pour le moment");
+					}
+					else {
+						//parcour chaque parent, recupere son enfant/date pour crée le fichier ics
+						for (let i = 1; i < tableauParent.length; i++)
+							{	
+								//ariable pour dire qu'il faut sauvegarder -1 signifie false
+								var readyToSave = -1;
+								
+
+								if (i === tableauParent.length -1)
+								{
+									//indique qu'on est prés a sauvegarder 
+									readyToSave = 1;
+								}
+							
+							
+								//on recupere l'id de chaque parent du graph
+								var idParent  = tableauParent[i]
+											
+								//on recupere l'enfant du parent 
+								var tableauEnfant  = model.getChildCells(model.getCell(idParent));
+								
+								// on recupere l'objet parent grace a son id
+								var tableauDuParent = Object.values(model.getCell(idParent));
+								
+								
+								
+								//fonction permetant de recuperer les edges de notre cellule {id de la cell, edges entrant, edges sortant, boucle 
+								//var peutEtreEdges = model.getEdges(model.getCell(idParent), true, true, true);
+								
+								
+									
+								if (tableauDuParent[0] === null)
+								{
+									mxUtils.alert("votre tache n'as pas de nom");
+								}
+								else
+								{
+									//on recupere le texte du parent, donc de la tache 
+									var textParent = tableauDuParent[0];
+									
+									//si il n'a pas d'enfant on indique a l'utilisateur que la date n'est pas mise 
+									if (tableauEnfant[0] === undefined)
+									{
+										mxUtils.alert("aucune date n'as etais ajouter pour la tache : " + textParent);
+									}
+										else{
+																						
+											
+											// on recupere l'enfant dans une variable enfant 
+											var enfant = tableauEnfant[0];
+											// on recupere le text de l'enfant qui est normalement la date 
+											var textEnfant = enfant.value;
+											
+											
+											
+											
+											var ajoutDate = 1;
+											// si la date commence par un + alors on vois 
+											if(textEnfant[0] == "+")
+											{
+												dateUnique = -1;
+												var dateSplit = textEnfant.split(" ");
+
+												
+												//on recupere l'edge de notre cellule 
+												var tabValeurEdgesEntrant = model.getEdges(model.getCell(idParent), true, false, false);
+												// si il n'y a pas d'edge entrant on indique un message d'erreur 
+												if (tabValeurEdgesEntrant[0] === undefined)
+												{
+													mxUtils.alert("Pas de liason anterieur pour la tache :" + textParent );
+												}
+												else 
+												{
+													//on recupere la valeur de l'edge entrant 
+													var valeurEdgesEntrant = Object.values(tabValeurEdgesEntrant[0]);
+													// on recupere le vertex source de l'edge 
+													var vertexSource = Object.values(valeurEdgesEntrant[6]);
+													// on recupere son id 
+													var idVertexSource = vertexSource[50];
+													
+													//on recupere son enfant sous forme de tableau 
+													var tabEnfantSource = model.getChildCells(model.getCell(idVertexSource));
+													//on recupere son unique enfant 
+													var enfantSource = tabEnfantSource[0];
+													
+													
+													
+													//on recupere son texte 
+													var textEnfantSource = enfantSource.value;
+													
+													var testIfEnfantDateMulti = textEnfantSource.split(' / ');
+													
+													// si le vertex précédent est une date multiple 
+													if( testIfEnfantDateMulti[1] !== undefined)
+													{	
+														textEnfantSource = testIfEnfantDateMulti[1];
+													}
+
+													
+													//si le texte de l'enfant est encore un ajout de date on ne le gére pas 
+													if(textEnfantSource[0] == '+')
+													{
+														mxUtils.alert("la date de la tache " + vertexSource[0] + " ne dois pas etre un ajout de date");
+													}
+													else
+													{
+														// on verifie qu'elle est l'unité de temps a augmenter 
+														if(dateSplit[2] == 'jours' || dateSplit[2] == 'jour')
+														{
+															
+															var date = textEnfantSource;
+															var addNombre = dateSplit[1];
+															var addUnit = 'day' ;
+															
+															
+															$.get("/exportPage", {dateUnique, ajoutDate, date, textParent, addNombre, addUnit, readyToSave}, function(data){}, "jason");
+															
+														}
+														else if(dateSplit[2] == 'mois')
+														{
+															
+															var date = textEnfantSource;
+															var addNombre = dateSplit[1];
+															var addUnit = 'month' ;
+															
+															$.get("/exportPage", {dateUnique, ajoutDate, date, textParent, addNombre, addUnit, readyToSave}, function(data){}, "jason");
+															
+										
+														}
+														else if(dateSplit[2] == 'ans' || dateSplit[2] == 'an')
+														{
+															
+															var date = textEnfantSource;
+															var addNombre = dateSplit[1];
+															var addUnit = 'year' ;
+															
+															$.get("/exportPage", {dateUnique, ajoutDate, date, textParent, addNombre, addUnit, readyToSave}, function(data){}, "jason");
+															
+														}
+														else
+														{
+															mxUtils.alert("format de date invalide");
+														}
+													}
+
+												}
+												
+									
+												
+												
+												
+											}
+											else if (validDatePatternDateUnique(textEnfant) || validDatePatternMulti(textEnfant))// ajouter if la date n'est pas dans le bon format 
+											{
+												//on split pour avoir chaque date séparement pour tester si elle sont bonne 
+												var textEnfantSplit = textEnfant.split(" / ");
+												
+												
+												if(validDate(textEnfantSplit[0]))
+												{
+													ajoutDate = -1;
+													var dateUnique = 1;
+													
+													var textEnfantDate = textEnfant.split(" / ");
+													if(textEnfantDate[1] === undefined)
+													{
+														
+														
+														//cela signifie que c'est une date unique qui est marquer 
+														dateUnique = 1;
+														var date = textEnfantDate[0];
+										
+														$.get("/exportPage", {dateUnique, ajoutDate, date, textParent, readyToSave}, function(data){}, "jason");
+														
+													}
+													else 
+													{
+													
+														if (validDate(textEnfantSplit[1]))
+														{
+															dateUnique = -1 ;
+															
+															var date = textEnfantDate[0]
+															var date2 = textEnfantDate[1]
+															
+															
+															
+															$.get("/exportPage", {dateUnique, ajoutDate, date, date2, textParent, readyToSave}, function(data){}, "jason");
+														
+														}
+														else
+														{
+															mxUtils.alert(" votre deuxieme date n'existe pas pour la tache : " + textParent);
+
+														}
+														
+													}
+												}
+												else
+												{
+													mxUtils.alert(" votre date n'existe pas pour la tache : " + textParent);
+												}
+												
+											}
+											else
+											{
+												
+												mxUtils.alert(" votre format de date est invalide pour la tache : " + textParent);
+											}//ajouter else message d'erreur mauvais format de date 
+											
+											
+											
+										}
+						
+									}
+
+								
+							}
+					}
+					mxUtils.alert("le graph a bien etais enregistrer, maintenant cliquer sur \"télécharger\"");
+					
+				});
+		
+				
+				button.style.position = 'absolute';
+				button.style.left = '2px';
+				button.style.top = '2px';
+				
+				document.body.appendChild(button);
+
+				
+			}
+								
+		}
+
+
+		function addToolbarItem(graph, toolbar, prototype, image)
+		{
+			// Function that is executed when the image is dropped on
+			// the graph. The cell argument points to the cell under
+			// the mousepointer if there is one.
+
+			var funct = function(graph, evt, cell)
+			{	
+
+
+				
+				graph.stopEditing(false);
+				
+				
+				
+				var pt = graph.getPointForEvent(evt);
+				var vertex = graph.getModel().cloneCell(prototype);
+				vertex.geometry.x = pt.x;
+				vertex.geometry.y = pt.y;
+				
+				graph.setSelectionCells(graph.importCells([vertex], 0, 0, cell));
+			
+
+			}
+
+			// Creates the image which is used as the drag icon (preview)
+			var img = toolbar.addMode(null, image, funct);
+			mxUtils.makeDraggable(img, graph, funct);
+			
+		}
+		
+	</script>
+</head>
+		
+<body onload="main();">
+<form action="/download" id="bouton_download">
+    <input type="submit" value="telecharger" />
+</form>
+</body>
+</html>
+	

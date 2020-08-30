@@ -1,0 +1,403 @@
+<html>
+<head> 
+	<title> toolbar projet </title>
+	
+	<!-- chemin de base des sources -->
+	<script type="text/javascript">
+		mxBasePath = 'mxgraph-master/mxgraph-master/javascript/src';
+	</script>
+	
+	<!-- chemin vers la bibliotheque -->
+	<script type="text/javascript" src="mxgraph-master/mxgraph-master/javascript/src/js/mxClient.js"></script>
+
+
+	
+
+
+	<script type="text/javascript">
+	
+		mxGraph.prototype.getAllConnectionConstraints = function(terminal, source)
+		{
+			if (terminal != null && terminal.shape != null)
+			{
+				if (terminal.shape.stencil != null)
+				{
+					if (terminal.shape.stencil.constraints != null)
+					{
+						return terminal.shape.stencil.constraints;
+					}
+				}
+				else if (terminal.shape.constraints != null)
+				{
+					return terminal.shape.constraints;
+				}
+			}
+	
+			return null;
+		};
+	
+		// Defines the default constraints for all shapes
+		mxShape.prototype.constraints = [new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+										 new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+										 new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+		        	              		 new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+		        	              		 new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+		        	              		 new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+		        	            		 new mxConnectionConstraint(new mxPoint(0.75, 1), true)];
+		
+		// Edges have no connection points
+		mxPolyline.prototype.constraints = null;
+	
+
+	
+		function main()
+		{
+		
+			
+			 
+			
+			// Defines an icon for creating new connections in the connection handler.
+			// This will automatically disable the highlighting of the source vertex.
+			//mxConnectionHandler.prototype.connectImage = new mxImage('mxgraph-master/mxgraph-master/javascript/examples/images/connector.gif', 16, 16);
+			
+			// Checks if browser is supported
+			if (!mxClient.isBrowserSupported())
+			{
+				// Displays an error message if the browser is
+				// not supported.
+				mxUtils.error('Browser is not supported!', 200, false);
+			}
+			else
+			{
+				
+
+				
+				// Creates the div for the toolbar
+				var tbContainer = document.createElement('div');
+				tbContainer.style.position = 'absolute';
+				tbContainer.style.overflow = 'hidden';
+				tbContainer.style.padding = '2px';
+				tbContainer.style.left = '0px';
+				tbContainer.style.top = '26px';
+				tbContainer.style.width = '24px';
+				tbContainer.style.bottom = '0px';
+				
+				document.body.appendChild(tbContainer);
+			
+				// Creates new toolbar without event processing
+				var toolbar = new mxToolbar(tbContainer);
+				toolbar.enabled = false
+				
+				// Creates the div for the graph
+				container = document.createElement('div');
+				container.style.position = 'absolute';
+				container.style.overflow = 'hidden';
+				container.style.left = '24px';
+				container.style.top = '26px';
+				container.style.right = '0px';
+				container.style.bottom = '0px';
+				container.style.background = 'url("mxgraph-master/mxgraph-master/javascript/examples/editors/images/grid.gif")';
+
+				document.body.appendChild(container);
+				
+				
+				
+				
+				// Workaround for Internet Explorer ignoring certain styles
+				if (mxClient.IS_QUIRKS)
+				{
+					document.body.style.overflow = 'hidden';
+					new mxDivResizer(tbContainer);
+					new mxDivResizer(container);
+				}
+				
+	
+				// Creates the model and the graph inside the container
+				// using the fastest rendering available on the browser
+				var model = new mxGraphModel();
+				var graph = new mxGraph(container, model);
+				
+				graph.dropEnabled = true;
+				graph.htlmLabels = true;
+				graph.vertexLabelsMovable = true;
+				graph.graphHandler.removeCellsFromParent = false;
+				graph.autoSizeCellsOnAdd = true;
+				
+				var edgeStyle = graph.stylesheet.getDefaultEdgeStyle();
+				edgeStyle[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector;
+				
+
+		
+				graph.isCellResizable = function(cell)
+				{
+					var geo = this.model.getGeometry(cell);
+					
+					return geo == null || !geo.relative;
+				};
+				
+								graph.getLabel = function(cell)
+				{
+					var label = (this.labelsVisible) ? this.convertValueToString(cell) : '';
+					var geometry = this.model.getGeometry(cell);
+					
+					if (!this.model.isCollapsed(cell) && geometry != null && (geometry.offset == null ||
+						(geometry.offset.x == 0 && geometry.offset.y == 0)) && this.model.isVertex(cell) &&
+						geometry.width >= 2)
+					{
+						var style = this.getCellStyle(cell);
+						var fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
+						var max = geometry.width / (fontSize * 0.625);
+						
+						if (max < label.length)
+						{
+							return label.substring(0, max) + '...';
+						}
+					}
+					
+					return label;
+				};
+				
+				// Enables wrapping for vertex labels
+				graph.isWrapping = function(cell)
+				{
+					return this.model.isCollapsed(cell);
+				};
+				
+				// Enables clipping of vertex labels if no offset is defined
+				graph.isLabelClipped = function(cell)
+				{
+					var geometry = this.model.getGeometry(cell);
+					
+					return geometry != null && !geometry.relative && (geometry.offset == null ||
+						(geometry.offset.x == 0 && geometry.offset.y == 0));
+				};
+				
+				// Gets the default parent for inserting new cells. This
+				// is normally the first child of the root (ie. layer 0).
+				<!-- var parent = graph.getDefaultParent(); -->
+				
+				<!-- try -->
+				<!-- { -->
+					<!-- var v1 = graph.insertVertex(parent, null, 'vertexLabelsMovable', 20, 20, 80, 30); -->
+
+					<!-- // Places sublabels inside the vertex -->
+					<!-- var label11 = graph.insertVertex(v1, null, 'Label1', 0.5, 1, 0, 0, null, true); -->
+					<!-- var label12 = graph.insertVertex(v1, null, 'Label2', 0.5, 0, 0, 0, null, true); -->
+					
+					<!-- var v2 = graph.insertVertex(parent, null, 'Wrapping and clipping is enabled only if the cell is collapsed, otherwise the label is truncated if there is no manual offset.', 200, 150, 80, 30); -->
+					<!-- v2.geometry.alternateBounds = new mxRectangle(0, 0, 80, 30); -->
+					<!-- var e1 = graph.insertEdge(parent, null, 'edgeLabelsMovable', v1, v2, 'edgeStyle=orthogonalEdgeStyle;'); -->
+					
+					<!-- // Places sublabels inside the vertex -->
+					<!-- var label21 = graph.insertVertex(v2, null, 'Label1', 0.5, 1, 0, 0, null, true); -->
+					<!-- var label22 = graph.insertVertex(v2, null, 'Label2', 0.5, 0, 0, 0, null, true); -->
+				<!-- } -->
+				<!-- finally -->
+				<!-- { -->
+					<!-- // Updates the display -->
+					<!-- graph.getModel().endUpdate(); -->
+				<!-- } -->
+				
+
+				
+
+							
+				
+				
+				var deleteImage = new mxImage('mxgraph-master/mxgraph-master/javascript/examples/editors/images/overlays/forbidden.png', 16, 16);
+				
+				mxCellRendererCreateControl = mxCellRenderer.prototype.createControl;
+				mxCellRenderer.prototype.createControl = function(state)
+				{
+					mxCellRendererCreateControl.apply(this, arguments);
+					
+					var graph = state.view.graph;
+					
+					if (graph.getModel().isVertex(state.cell))
+					{
+						if (state.deleteControl == null)
+						{
+							var b = new mxRectangle(0, 0, deleteImage.width, deleteImage.height);
+							state.deleteControl = new mxImageShape(b, deleteImage.src);
+							state.deleteControl.dialect = graph.dialect;
+							state.deleteControl.preserveImageAspect = false;
+							
+							this.initControl(state, state.deleteControl, false, function (evt)
+							{
+								if (graph.isEnabled())
+								{
+									graph.removeCells([state.cell]);
+									mxEvent.consume(evt);
+								}
+							});
+						}
+					}
+					else if (state.deleteControl != null)
+					{
+						state.deleteControl.destroy();
+						state.deleteControl = null;
+					}
+				};
+				
+				var getDeleteControlBounds = function(state)
+				{
+					if (state.deleteControl != null)
+					{
+						var oldScale = state.deleteControl.scale;
+						var w = state.deleteControl.bounds.width / oldScale;
+						var h = state.deleteControl.bounds.height / oldScale;
+						var s = state.view.scale;			
+
+						return (state.view.graph.getModel().isEdge(state.cell)) ? 
+							new mxRectangle(state.x + state.width / 2 - w / 2 * s,
+								state.y + state.height / 2 - h / 2 * s, w * s, h * s)
+							: new mxRectangle(state.x + state.width - w * s,
+								state.y, w * s, h * s);
+					}
+					
+					return null;
+				};
+				
+				mxCellRendererRedrawControl = mxCellRenderer.prototype.redrawControl;
+				mxCellRenderer.prototype.redrawControl = function(state)
+				{
+					mxCellRendererRedrawControl.apply(this, arguments);
+					
+					if (state.deleteControl != null)
+					{
+						var bounds = getDeleteControlBounds(state);
+						var s = state.view.scale;
+						
+						if (state.deleteControl.scale != s || !state.deleteControl.bounds.equals(bounds))
+						{
+							state.deleteControl.bounds = bounds;
+							state.deleteControl.scale = s;
+							state.deleteControl.redraw();
+						}
+					}
+				};
+				
+				// Overridden to remove the control if the state is destroyed
+				mxCellRendererDestroy = mxCellRenderer.prototype.destroy;
+				mxCellRenderer.prototype.destroy = function(state)
+				{
+					mxCellRendererDestroy.apply(this, arguments);
+
+					if (state.deleteControl != null)
+					{
+						state.deleteControl.destroy();
+						state.deleteControl = null;
+					}
+				};
+				
+				// Matches DnD inside the graph
+				mxDragSource.prototype.getDropTarget = function(graph, x, y)
+				{
+					var cell = graph.getCellAt(x, y);
+					
+					if (!graph.isValidDropTarget(cell))
+					{
+						cell = null;
+					}
+					
+					return cell;
+				};
+
+				// Enables new connections in the graph
+				graph.setConnectable(true);
+				graph.setMultigraph(false);
+
+				// Stops editing on enter or escape keypress
+				var keyHandler = new mxKeyHandler(graph);
+				var rubberband = new mxRubberband(graph);
+				
+				var addVertex = function(icon, w, h, style)
+				{
+					var vertex = new mxCell(null, new mxGeometry(0, 0, w, h), style);
+					vertex.setVertex(true);
+				
+					addToolbarItem(graph, toolbar, vertex, icon);
+				};
+				
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/swimlane.gif', 120, 160, 'shape=swimlane;startSize=20;');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/rectangle.gif', 100, 40, '');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/ellipse.gif', 40, 40, 'shape=ellipse');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/rhombus.gif', 40, 40, 'shape=rhombus');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/triangle.gif', 40, 40, 'shape=triangle');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/cylinder.gif', 40, 40, 'shape=cylinder');
+				addVertex('mxgraph-master/mxgraph-master/javascript/examples/editors/images/actor.gif', 30, 40, 'shape=actor');
+				toolbar.addLine();
+				
+				var button = mxUtils.button('export', function(evt)
+				{
+
+				});
+
+				button.style.position = 'absolute';
+				button.style.left = '2px';
+				button.style.top = '2px';
+				
+				document.body.appendChild(button);
+			}
+			
+					
+
+					
+		}
+
+		function addToolbarItem(graph, toolbar, prototype, image)
+		{
+			// Function that is executed when the image is dropped on
+			// the graph. The cell argument points to the cell under
+			// the mousepointer if there is one.
+			var funct = function(graph, evt, cell)
+			{
+				graph.stopEditing(false);
+
+				var pt = graph.getPointForEvent(evt);
+				var vertex = graph.getModel().cloneCell(prototype);
+				vertex.geometry.x = pt.x;
+				vertex.geometry.y = pt.y;
+				
+				graph.setSelectionCells(graph.importCells([vertex], 0, 0, cell));
+			}
+
+			// Creates the image which is used as the drag icon (preview)
+			var img = toolbar.addMode(null, image, funct);
+			mxUtils.makeDraggable(img, graph, funct);
+		}
+		
+
+		
+	</script>
+</head>
+		
+<body onload="main();">
+</body>
+</html>
+	
+						
+						
+						
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+	
+	
+	
+	
+	
+	
+	

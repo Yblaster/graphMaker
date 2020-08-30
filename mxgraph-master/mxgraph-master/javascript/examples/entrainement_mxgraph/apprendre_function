@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script>
+function myFunction(container) {
+  container.innerHTML = "Hello World";
+}
+</script>
+
+</head>
+
+<body onload="myFunction(document.getElementById('test'))">
+
+<h1>The onload Event</h1>
+
+<p>The onload event is used launch the script passed .</p>
+
+<p>using a div with id=test which  we passed by document.getElementById().</p>
+
+
+
+
+<div id="test"></div>
+
+
+
+
+
+</body>
+</html>
