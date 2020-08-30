@@ -1,0 +1,19 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//sebbo.net//ical-generator.tests//EN
+BEGIN:VEVENT
+UID:123@sebbo.net
+SEQUENCE:0
+DTSTAMP:20200622T132637Z
+DTSTART:20200623T160000Z
+DTEND:20200622T180000Z
+SUMMARY:Sample Event
+LOCATION:localhost
+DESCRIPTION:Lorem ipsum dolor sit amet\, consetetur sadipscing elitr\, sed
+  diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam era
+ t\, sed diam voluptua.\nbeep boop
+X-ALT-DESC;FMTTYPE=text/html:<p>Lorem ipsum dolor sit amet\, consetetur sa
+ dipscing elitr\, sed diam nonumy eirmod tempor invidunt ut labore et dolor
+ e magna aliquyam erat\, sed diam voluptua.\nbeep boop</p>
+END:VEVENT
+END:VCALENDAR
